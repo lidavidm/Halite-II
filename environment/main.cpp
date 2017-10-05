@@ -100,6 +100,22 @@ int main(int argc, char** argv) {
                                                     ".",
                                                     "path to directory",
                                                     cmd);
+
+    TCLAP::ValueArg<std::string> replayReplayArg("k",
+                                                 "takeover",
+                                                 "A replay file to take over.",
+                                                 false,
+                                                 "",
+                                                 "path to replay file",
+                                                 cmd);
+    TCLAP::ValueArg<unsigned int> replayReplayFrameArg("f",
+                                                       "takeoverframe",
+                                                       "The frame to start the replay takeover from.",
+                                                       false,
+                                                       0,
+                                                       "frame number",
+                                                       cmd);
+
     TCLAP::ValueArg<std::string> constantsArg(
         "",
         "constantsfile",
@@ -279,15 +295,19 @@ int main(int argc, char** argv) {
         exit(1);
     }
 
-
-
-    //Create game. Null parameters will be ignored.
-    my_game = new Halite(mapWidth,
-                         mapHeight,
-                         seed,
-                         n_players_for_map_creation,
-                         networking,
-                         ignore_timeout);
+    if (replayReplayArg.getValue() != "") {
+        auto frame_no = replayReplayFrameArg.getValue();
+        my_game = new Halite(networking, replayReplayArg.getValue(), frame_no);
+    }
+    else {
+      //Create game. Null parameters will be ignored.
+        my_game = new Halite(mapWidth,
+                             mapHeight,
+                             seed,
+                             n_players_for_map_creation,
+                             networking,
+                             ignore_timeout);
+    }
 
     std::string outputFilename = replayDirectoryArg.getValue();
 #ifdef _WIN32
