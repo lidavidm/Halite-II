@@ -115,6 +115,8 @@ public:
            Networking networking_,
            bool should_ignore_timeout);
 
+    Halite(Networking networking_, std::string replay_file, unsigned int frame_no);
+
     GameStatistics run_game(std::vector<std::string>* names_,
                             unsigned int id,
                             bool enable_replay,
