@@ -170,3 +170,78 @@ auto Replay::output(std::string filename) -> void {
     gameFile.flush();
     gameFile.close();
 }
+
+
+auto Replay::input(std::string filename, unsigned int frame_no) -> void {
+    std::ifstream gameFile;
+    gameFile.open(filename, std::ios::in | std::ios::binary);
+    if (!gameFile.is_open())
+        throw std::runtime_error("Could not open file for replay");
+
+    std::vector<uint8_t> raw_contents((std::istreambuf_iterator<char>(gameFile)),
+                                      std::istreambuf_iterator<char>());
+
+    const auto decompressed_size = ZSTD_getFrameContentSize(raw_contents.data(), raw_contents.size());
+    if (decompressed_size <= 0) {
+        throw std::runtime_error("Could not decompress replay");
+    }
+
+    auto buffer = std::malloc(decompressed_size);
+    const auto result = ZSTD_decompress(buffer, decompressed_size, raw_contents.data(), raw_contents.size());
+    if (ZSTD_isError(result)) {
+        throw std::runtime_error("Error decompressing replay");
+    }
+
+    const auto replay = nlohmann::json::parse(std::string(reinterpret_cast<char const*>(buffer), result));
+
+    hlt::GameConstants::get_mut().from_json(replay["constants"]);
+    number_of_players = replay["num_players"];
+    seed = replay["seed"];
+    map_generator = replay["map_generator"];
+    map_generator += " (takeover)";
+    map_width = replay["width"];
+    map_height = replay["height"];
+
+    std::cout
+        << "Taking over replay\n"
+        << "Map: " << map_generator << " " << seed << " "
+        << map_width << "x" << map_height
+        << "\n";
+
+    const auto& frame = replay["frames"][frame_no];
+    auto game_map = hlt::Map(map_width, map_height);
+
+    for (const auto& planet_data : replay["planets"]) {
+        game_map.planets.push_back(hlt::Planet(planet_data["x"],
+                                               planet_data["y"],
+                                               planet_data["r"]));
+    }
+
+    for (const auto& planet_data : frame["planets"]) {
+        auto& planet = game_map.planets[planet_data["id"]];
+        planet.health = planet_data["health"];
+        planet.remaining_production = planet_data["remaining_production"];
+        planet.current_production = planet_data["current_production"];
+    }
+
+    auto next_index = 0;
+    for (const auto& player_ships : frame["ships"]) {
+        for (const auto& ship_data : player_ships) {
+            if (ship_data["y"].get<double>() < 167.0) continue;
+            if (ship_data["y"].get<double>() > 168.0) continue;
+            const auto id = ship_data["id"].get<int>();
+            const auto owner = ship_data["owner"].get<int>();
+            next_index = std::max(id, next_index);
+            game_map.ships[owner][id] = hlt::Ship();
+            game_map.ships[owner][id].revive(hlt::Location{
+                    ship_data["x"], ship_data["y"] });
+            std::cout << "Revived player " << owner << " ship " << id << "\n";
+        }
+    }
+
+    full_frames.push_back(game_map);
+
+    std::free(buffer);
+    gameFile.close();
+
+}
