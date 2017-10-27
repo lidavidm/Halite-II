@@ -233,6 +233,7 @@ auto Replay::input(std::string filename, unsigned int frame_no) -> void {
             game_map.ships[owner][id] = hlt::Ship();
             game_map.ships[owner][id].revive(hlt::Location{
                     ship_data["x"], ship_data["y"] });
+            game_map.ships[owner][id].health = ship_data["health"];
             if (ship_data["docking"]["status"] == "docked") {
                 game_map.ships[owner][id].docking_status = hlt::DockingStatus::Docked;
                 game_map.ships[owner][id].docked_planet = ship_data["docking"]["planet_id"].get<int>();
