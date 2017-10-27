@@ -227,14 +227,17 @@ auto Replay::input(std::string filename, unsigned int frame_no) -> void {
     auto next_index = 0;
     for (const auto& player_ships : frame["ships"]) {
         for (const auto& ship_data : player_ships) {
-            if (ship_data["y"].get<double>() < 167.0) continue;
-            if (ship_data["y"].get<double>() > 168.0) continue;
             const auto id = ship_data["id"].get<int>();
             const auto owner = ship_data["owner"].get<int>();
             next_index = std::max(id, next_index);
             game_map.ships[owner][id] = hlt::Ship();
             game_map.ships[owner][id].revive(hlt::Location{
                     ship_data["x"], ship_data["y"] });
+            if (ship_data["docking"]["status"] == "docked") {
+                game_map.ships[owner][id].docking_status = hlt::DockingStatus::Docked;
+                game_map.ships[owner][id].docked_planet = ship_data["docking"]["planet_id"].get<int>();
+                game_map.planets[game_map.ships[owner][id].docked_planet].add_ship(id);
+            }
             std::cout << "Revived player " << owner << " ship " << id << "\n";
         }
     }
