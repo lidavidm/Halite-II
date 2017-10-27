@@ -81,17 +81,17 @@ namespace mapgen {
         const auto max_radius =
             std::max(5.0, std::sqrt(std::min(map.map_width, map.map_height)));
         const auto min_separation =
-            std::sqrt(std::min(map.map_width, map.map_height)) / 1.5;
+            std::sqrt(std::min(map.map_width, map.map_height));
         auto rand_x_axis = std::bind(
-            std::uniform_int_distribution<int>(1, map.map_width / 2 - 1), std::ref(rng));
+            std::uniform_int_distribution<int>(1, map.map_width / 1.5 - 1), std::ref(rng));
         auto rand_y_axis = std::bind(
-            std::uniform_int_distribution<int>(1, map.map_height / 2 - 1), std::ref(rng));
+            std::uniform_int_distribution<int>(1, map.map_height / 1.5 - 1), std::ref(rng));
         auto rand_angle = std::bind(
             std::uniform_real_distribution<double>(0, 2 * M_PI), std::ref(rng));
         auto rand_radius =
             std::bind(std::uniform_real_distribution<double>(min_radius, max_radius), std::ref(rng));
         auto rand_planets_generated =
-            std::bind(std::uniform_int_distribution<>(2, std::max(2, planets_per_player / 2)), std::ref(rng));
+            std::bind(std::uniform_int_distribution<>(2, std::max(2, planets_per_player)), std::ref(rng));
 
         // Temporary storage for the planets created in a particular orbit
         auto planets = std::vector<Zone>();
@@ -178,7 +178,10 @@ namespace mapgen {
 
                 const auto ellipse_x_axis = rand_x_axis();
                 const auto ellipse_y_axis = rand_y_axis();
-                const auto offset = rand_angle();
+                auto offset = 0;
+                if (rng() < 0.5) {
+                    offset = M_PI / planets_to_generate;
+                }
                 const auto step = 2.0 * M_PI / planets_to_generate;
                 const auto radius = rand_radius();
 
@@ -254,42 +257,35 @@ namespace mapgen {
             }
         }
 
-        // Generate clusters of small planets in the corners (disabled right now)
-        if (extra_planets > 12) {
-            const auto big_radius =
-                std::max(3.0, std::sqrt(std::min(map.map_width, map.map_height)) / 4);
-            const auto small_radius =
-                std::max(2.0, std::sqrt(std::min(map.map_width, map.map_height) / 5));
-            const auto radius =
-                std::uniform_real_distribution<>(small_radius, big_radius)(rng);
-            const auto distance_from_center = 2 * radius +
-                2 * hlt::GameConstants::get().SHIP_RADIUS;
+        // Generate planets in the corners
+        const auto big_radius =
+            std::max(3.0, std::sqrt(std::min(map.map_width, map.map_height)) / 2);
+        const auto small_radius =
+            std::max(2.0, std::sqrt(std::min(map.map_width, map.map_height) / 3));
+        const auto radius =
+            std::uniform_real_distribution<>(small_radius, big_radius)(rng);
 
-            std::vector<hlt::Location> candidates;
+        std::vector<hlt::Location> candidates;
 
-            auto place_corner = [&](hlt::Location center, double offset) -> bool {
-                for (auto i = 0; i < 3; i++) {
-                    const auto angle = i * 2 * M_PI / 3 + offset;
-                    const auto location = hlt::Location{
-                        center.pos_x + distance_from_center * std::cos(angle),
-                        center.pos_y + distance_from_center * std::sin(angle),
-                    };
-                    if (!is_ok_location(location, radius)) {
-                        return false;
-                    }
-                    candidates.push_back(location);
-                }
-                return true;
+        auto place_corner = [&](hlt::Location center) -> bool {
+            const auto location = hlt::Location{
+                center.pos_x,
+                center.pos_y,
             };
+            if (!is_ok_location(location, radius)) {
+                return false;
+            }
+            candidates.push_back(location);
+            return true;
+        };
 
-            if ((place_corner({5 * radius, 5 * radius}, -M_PI / 4) &&
-                place_corner({map.map_width - 5 * radius, 5 * radius}, M_PI / 3) &&
-                place_corner({5 * radius, map.map_height - 5 * radius}, M_PI / 4 - M_PI / 3) &&
-                place_corner({map.map_width - 5 * radius, map.map_height - 5 * radius}, M_PI / 3 - M_PI / 4)
-            )) {
-                for (const auto location : candidates) {
-                    map.planets.emplace_back(location.pos_x, location.pos_y, radius);
-                }
+        if ((place_corner({5 * radius, 5 * radius}) &&
+             place_corner({map.map_width - 5 * radius, 5 * radius}) &&
+             place_corner({5 * radius, map.map_height - 5 * radius}) &&
+             place_corner({map.map_width - 5 * radius, map.map_height - 5 * radius})
+             )) {
+            for (const auto location : candidates) {
+                map.planets.emplace_back(location.pos_x, location.pos_y, radius);
             }
         }
 
@@ -310,7 +306,8 @@ namespace mapgen {
             }
         }
 
-        return {};
+        // return {};
+        return orbits;
     }
 
     auto SolarSystem::name() -> std::string {
