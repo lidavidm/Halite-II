@@ -234,8 +234,17 @@ auto Replay::input(std::string filename, unsigned int frame_no) -> void {
             game_map.ships[owner][id].revive(hlt::Location{
                     ship_data["x"], ship_data["y"] });
             game_map.ships[owner][id].health = ship_data["health"];
-            if (ship_data["docking"]["status"] == "docked") {
-                game_map.ships[owner][id].docking_status = hlt::DockingStatus::Docked;
+            if (ship_data["docking"]["status"] != "undocked") {
+                if (ship_data["docking"]["status"] == "docked")
+                    game_map.ships[owner][id].docking_status = hlt::DockingStatus::Docked;
+                else if (ship_data["docking"]["status"] == "docking") {
+                    game_map.ships[owner][id].docking_status = hlt::DockingStatus::Docking;
+                    game_map.ships[owner][id].docking_progress = ship_data["docking"]["turns_left"].get<int>();
+                }
+                else if (ship_data["docking"]["status"] == "undocking") {
+                    game_map.ships[owner][id].docking_status = hlt::DockingStatus::Undocking;
+                    game_map.ships[owner][id].docking_progress = ship_data["docking"]["turns_left"].get<int>();
+                }
                 game_map.ships[owner][id].docked_planet = ship_data["docking"]["planet_id"].get<int>();
                 game_map.planets[game_map.ships[owner][id].docked_planet].add_ship(id);
             }
