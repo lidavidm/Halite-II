@@ -1203,6 +1203,49 @@ Halite::Halite(unsigned short width_,
     error_tags = std::set<unsigned short>();
 }
 
+Halite::Halite(Networking networking_, std::string replay_file, unsigned int frame_no) {
+    networking = networking_;
+
+    ignore_timeout = false;
+
+    GameStatistics stats;
+
+    std::vector<std::string> player_names;
+    std::vector<mapgen::PointOfInterest> points_of_interest;
+    std::vector<hlt::Map> full_frames;
+    std::vector<std::vector<std::unique_ptr<Event>>> full_frame_events;
+    std::vector<hlt::MoveQueue> full_player_moves;
+
+    Replay replay = {
+        stats,
+        0,
+        player_names,
+        0, "", points_of_interest,
+        0, 0,
+        full_frames, full_frame_events, full_player_moves,
+    };
+
+    replay.input(replay_file, frame_no);
+
+    this->full_frames = full_frames;
+    this->number_of_players = replay.number_of_players;
+    this->game_map = full_frames.at(0);
+    this->player_moves = { { { {} } } };
+    this->turn_number = 0;
+    this->player_names = std::vector<std::string>(number_of_players);
+    std::cout << "Number of players: " << number_of_players << "\n";
+
+    this->alive_frame_count = std::vector<unsigned short>(number_of_players, 1);
+    this->init_response_times = std::vector<unsigned int>(number_of_players);
+    this->last_ship_count = std::vector<unsigned int>(number_of_players);
+    this->last_ship_health_total = std::vector<unsigned int>(number_of_players);
+    this->total_ship_count = std::vector<unsigned int>(number_of_players);
+    this->kill_count = std::vector<unsigned int>(number_of_players);
+    this->damage_dealt = std::vector<unsigned int>(number_of_players);
+    this->total_frame_response_times = std::vector<unsigned int>(number_of_players);
+    this->error_tags = std::set<unsigned short>();
+}
+
 Halite::~Halite() {
     // Get rid of dynamically allocated memory:
     for (hlt::PlayerId a = 0; a < number_of_players; a++) {
