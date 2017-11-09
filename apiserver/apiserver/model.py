@@ -37,7 +37,7 @@ hackathons = sqlalchemy.Table("hackathon", metadata, autoload=True)
 hackathon_participants = sqlalchemy.Table("hackathon_participant", metadata, autoload=True)
 hackathon_snapshot = sqlalchemy.Table("hackathon_snapshot", metadata, autoload=True)
 challenges = sqlalchemy.Table("challenge", metadata, autoload=True)
-challenge_participants = sqlalchemy.Table("user_challenge", metadata, autoload=True)
+challenge_participants = sqlalchemy.Table("challenge_participant", metadata, autoload=True)
 
 def ranked_bots_query(variable="rank", alias="ranked_bots"):
     """

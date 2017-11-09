@@ -36,6 +36,10 @@ def upgrade():
         sa.Column("most_recent_game_task",
                   sa.DateTime,
                   nullable=True),
+        sa.Column("issuer",
+                  mysql.MEDIUMINT(display_width=8, unsigned=True),
+                  sa.ForeignKey("user.id"),
+                  nullable=False),
         sa.Column("winner",
                   mysql.MEDIUMINT(display_width=8, unsigned=True),
                   sa.ForeignKey("user.id"),
@@ -43,7 +47,7 @@ def upgrade():
     )
 
     op.create_table(
-        "user_challenge",
+        "challenge_participant",
         sa.Column("challenge_id",
                   sa.Integer,
                   sa.ForeignKey("challenge.id"),
@@ -52,9 +56,6 @@ def upgrade():
                   mysql.MEDIUMINT(display_width=8, unsigned=True),
                   sa.ForeignKey("user.id"),
                   primary_key=True),
-        sa.Column("is_issuer",
-                  sa.Boolean(),
-                  nullable=False),
         sa.Column("points",
                   sa.Integer(),
                   default=0,
