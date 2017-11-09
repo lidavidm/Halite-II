@@ -38,38 +38,55 @@ def upgrade():
                   nullable=True),
         sa.Column("issuer",
                   mysql.MEDIUMINT(display_width=8, unsigned=True),
-                  sa.ForeignKey("user.id"),
                   nullable=False),
         sa.Column("winner",
                   mysql.MEDIUMINT(display_width=8, unsigned=True),
-                  sa.ForeignKey("user.id"),
                   nullable=True),
+        sa.ForeignKeyConstraint(['issuer'], ['user.id'],
+                                name='challenge_issuer_fk',
+                                ondelete='CASCADE'),
+        sa.ForeignKeyConstraint(['winner'], ['user.id'],
+                                name='challenge_winner_fk',
+                                ondelete='CASCADE'),
     )
 
     op.create_table(
         "challenge_participant",
         sa.Column("challenge_id",
                   sa.Integer,
-                  sa.ForeignKey("challenge.id"),
                   primary_key=True),
         sa.Column("user_id",
                   mysql.MEDIUMINT(display_width=8, unsigned=True),
-                  sa.ForeignKey("user.id"),
                   primary_key=True),
         sa.Column("points",
                   sa.Integer(),
                   default=0,
                   nullable=False),
+        sa.ForeignKeyConstraint(['challenge_id'], ['challenge.id'],
+                                name='challenge_participant_fk',
+                                ondelete='CASCADE'),
+        sa.ForeignKeyConstraint(['user_id'], ['user.id'],
+                                name='challenge_participant_ibfk_2',
+                                ondelete='CASCADE'),
     )
 
     op.add_column(
         "game",
         sa.Column("challenge_id",
                   sa.Integer,
-                  sa.ForeignKey("challenge.id"),
-                  nullable=True)
+                  nullable=True),
     )
+
+    op.create_foreign_key('game_challenge_fk',
+                          'game',
+                          'challenge',
+                          ['challenge_id'],
+                          ['id'],
+                          ondelete='CASCADE')
 
 
 def downgrade():
-    pass
+    op.drop_constraint("game_challenge_fk", "game", "foreignkey")
+    op.drop_column("game", "challenge_id")
+    op.drop_table("challenge_participant")
+    op.drop_table("challenge")
