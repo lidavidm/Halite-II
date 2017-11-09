@@ -36,7 +36,7 @@ def make_challenge_record(challenge, participants):
 
 @web_api.route("/user/<int:intended_user>/challenge", methods=["GET"])
 @util.cross_origin(methods=["GET", "POST"])
-def get_user_challenges(intended_user):
+def list_user_challenges(intended_user):
     offset, limit = api_util.get_offset_limit()
     where_clause, order_clause, manual_sort = api_util.get_sort_filter({
         "issuer": model.challenges.c.issuer,
@@ -83,6 +83,39 @@ def get_user_challenges(intended_user):
             result.append(make_challenge_record(challenge, participants))
 
         return flask.jsonify(result)
+
+
+@web_api.route("/user/<int:intended_user>/challenge/<int:challenge_id>", methods=["GET"])
+@util.cross_origin(methods=["GET"])
+def get_user_challenge(intended_user, challenge_id):
+    participant_clause = model.challenge_participants.c.user_id == intended_user
+    with model.engine.connect() as conn:
+        query = sqlalchemy.sql.select([
+            model.challenges.c.id,
+            model.challenges.c.created,
+            model.challenges.c.finished,
+            model.challenges.c.num_games,
+            model.challenges.c.issuer,
+            model.challenges.c.winner,
+        ]).select_from(model.challenges).where(
+            model.challenges.c.id == challenge_id
+        ).reduce_columns()
+
+        challenge = conn.execute(query).first()
+        if not challenge:
+            raise util.APIError(
+                404,
+                message="Challenge {} not found.".format(challenge_id))
+
+        participants = conn.execute(
+            model.challenge_participants.join(
+                model.users,
+                model.challenge_participants.c.user_id == model.users.c.id
+            ).select(
+                model.challenge_participants.c.challenge_id == challenge["id"]
+            )
+        )
+        return flask.jsonify(make_challenge_record(challenge, participants))
 
 
 @web_api.route("/user/<int:intended_user>/challenge", methods=["POST"])
