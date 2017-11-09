@@ -15,18 +15,19 @@ from .blueprint import web_api
 def make_challenge_record(challenge, participants):
     result = {
         "challenge_id": challenge["id"],
-        "created": challenge["created"],
-        "finished": challenge["finished"],
+        "time_created": challenge["created"],
+        "time_finished": challenge["finished"],
         "num_games": challenge["num_games"],
         "issuer": challenge["issuer"],
         "winner": challenge["winner"],
+        "finished": bool(challenge["finished"]),
         "players": {},
     }
 
     for participant in participants:
         result["players"][participant["user_id"]] = {
             "username": participant["username"],
-            "points": participant["version_number"],
+            "points": participant["points"],
             "is_issuer": participant["user_id"] == result["issuer"],
         }
 
@@ -57,17 +58,12 @@ def get_user_challenges(intended_user):
             model.challenges.c.num_games,
             model.challenges.c.issuer,
             model.challenges.c.winner,
-        ]).select_from(model.games.join(
+        ]).select_from(model.challenges.join(
             model.challenge_participants,
-            (model.challenges.c.id == model.challenge_participants.c.game_id)
+            (model.challenges.c.id == model.challenge_participants.c.challenge_id) &
+            participant_clause
         )).where(
-            where_clause &
-            sqlalchemy.sql.exists(
-                model.challenge_participants.select(
-                    participant_clause &
-                    (model.challenge_participants.c.game_id == model.challenges.c.id)
-                )
-            )
+            where_clause
         ).order_by(
             *order_clause
         ).offset(offset).limit(limit).reduce_columns()
@@ -93,7 +89,7 @@ def get_user_challenges(intended_user):
 @util.cross_origin(methods=["GET", "POST"])
 @api_util.requires_login(accept_key=False)
 @api_util.requires_competition_open
-def create_challenge(intended_user, *, user_id):
+def create_challenge(intended_user, *, user_id=0):
     if user_id != intended_user:
         raise api_util.user_mismatch_error()
 
@@ -129,9 +125,9 @@ def create_challenge(intended_user, *, user_id):
             ]).select_from(
                 model.challenges
             ).where(
-                (model.challenge.c.issuer == user_id) &
-                (model.challenge.c.created >= sqlfunc.date_add(
-                    sqlfunc.now(), datetime.timedelta(days=-1)))
+                (model.challenges.c.issuer == user_id) &
+                (model.challenges.c.created >= sqlfunc.date_sub(
+                    sqlfunc.now(), sqlalchemy.sql.text("interval 1 day")))
             )
         ).first()[0]
 
