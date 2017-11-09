@@ -83,7 +83,9 @@ sudo -iu bot_compilation sdk install groovy
 
 # Julia
 wget -O julia.tgz https://julialang-s3.julialang.org/bin/linux/x64/0.6/julia-0.6.1-linux-x86_64.tar.gz
-tar xvzf julia.tgz
+sudo tar -C /usr/local -xzf julia.tgz
+rm julia.tgz
+sudo ln -s /usr/local/julia-0d7248e2ff/bin/julia /usr/local/bin/julia
 
 ## Create four cgroups to isolate bots.
 sudo touch /etc/cgconfig.conf
