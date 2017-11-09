@@ -15,6 +15,13 @@ class CompileStatus(enum.Enum):
     DISABLED = "Disabled"
 
 
+class ChallengeStatus(enum.Enum):
+    """The status of a challenge."""
+    CREATED = "created"
+    PLAYING_GAME = "playing_game"
+    FINISHED = "finished"
+
+
 # Database setup
 engine = sqlalchemy.create_engine(config.DATABASE_URL)
 metadata = sqlalchemy.MetaData(bind=engine)
