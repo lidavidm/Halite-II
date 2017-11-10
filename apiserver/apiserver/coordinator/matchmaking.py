@@ -174,7 +174,6 @@ def find_challenge(conn, has_gpu=False):
 
     player_filter = sqlalchemy.sql.expression.true()
     if not has_gpu:
-        # if this isn't a gpu enabled worker filter out gpu only bots
         player_filter = (model.ranked_bots_users.c.is_gpu_enabled == False)
 
     total_players = conn.execute(model.total_ranked_users).first()[0]
@@ -183,19 +182,14 @@ def find_challenge(conn, has_gpu=False):
     bots_query = sqlalchemy.sql.select([
         model.ranked_bots_users.c.user_id,
         model.ranked_bots_users.c.bot_id,
-        ranked_users.c.username,
+        model.ranked_bots_users.c.username,
         model.ranked_bots_users.c.rank,
-        ranked_users.c.rank.label("player_rank"),
         model.ranked_bots_users.c.num_submissions.label("version_number"),
-        model.ranked_bots_users.c.mu,
     ]).select_from(
         model.ranked_bots_users.join(
             model.bots,
             (model.ranked_bots_users.c.user_id == model.bots.c.user_id) &
             (model.ranked_bots_users.c.bot_id == model.bots.c.id)
-        ).join(
-            ranked_users,
-            (ranked_users.c.user_id == model.ranked_bots_users.c.user_id)
         )
     ).where(
         (model.bots.c.compile_status == model.CompileStatus.SUCCESSFUL.value) &
