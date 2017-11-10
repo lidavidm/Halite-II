@@ -135,8 +135,7 @@ def serve_game_task(conn, has_gpu=False):
             "width": map_width,
             "height": map_height,
             "users": players,
-            "is_challenge": False,
-            "challenge_id": None,
+            "challenge": None,
         })
 
 
@@ -204,7 +203,7 @@ def find_challenge(conn, has_gpu=False):
     bots = conn.execute(bots_query).fetchall()
 
     # TODO: assumes one-bot-per-player
-    if len(bots) not in (2, 4):
+    if len(bots) < 2:
         return None
 
     selected_bots = []
@@ -215,10 +214,10 @@ def find_challenge(conn, has_gpu=False):
         else:
             candidate_bots.append(bot)
 
-    if random.random() < 0.5:
-        selected_bots.append(random.choice(candidate_bots))
-    else:
+    if random.random() < 0.5 and len(candidate_bots) == 3:
         selected_bots.extend(candidate_bots)
+    else:
+        selected_bots.append(random.choice(candidate_bots))
 
     map_width, map_height = rand_map_size()
     players = [{
@@ -230,13 +229,14 @@ def find_challenge(conn, has_gpu=False):
         "tier": util.tier(player["rank"], total_players),
     } for player in selected_bots]
 
+    # TODO: update challenge most recent game time
+
     return util.response_success({
         "type": "game",
         "width": map_width,
         "height": map_height,
         "users": players,
-        "is_challenge": True,
-        "challenge_id": challenge["id"],
+        "challenge": challenge["id"],
     })
 
 
