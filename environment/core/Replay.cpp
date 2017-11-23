@@ -222,6 +222,7 @@ auto Replay::input(std::string filename, unsigned int frame_no) -> void {
         game_map.planets.push_back(hlt::Planet(planet_data["x"],
                                                planet_data["y"],
                                                planet_data["r"]));
+        game_map.planets.back().docking_spots = planet_data["docking_spots"];
     }
 
     for (const auto& planet_data : frame["planets"]) {
@@ -229,6 +230,11 @@ auto Replay::input(std::string filename, unsigned int frame_no) -> void {
         planet.health = planet_data["health"];
         planet.remaining_production = planet_data["remaining_production"];
         planet.current_production = planet_data["current_production"];
+        if (planet_data["owner"] != nullptr) {
+            planet.owned = true;
+            planet.owner = planet_data["owner"].get<int>();
+            std::cout << "Planet " << planet_data["id"] << " owner is " << (int) planet.owner << "\n";
+        }
     }
 
     auto next_index = 0;
