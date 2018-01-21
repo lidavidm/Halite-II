@@ -21,7 +21,7 @@ __license__ = "MIT"
 __status__ = "Production"
 __version__ = "1.5"
 
-URI_HALITE_API = 'http://api.halite.io/v1/api'
+URI_HALITE_API = 'http://localhost:5000/v1/api'
 URI_API_CREATE_BOT = URI_HALITE_API + "/user/{}/bot"
 URI_API_EXISTING_BOT = URI_HALITE_API + "/user/{}/bot/{}"
 URI_HALITE_WEB_PAGE = 'http://halite.io'

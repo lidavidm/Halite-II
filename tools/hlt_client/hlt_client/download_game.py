@@ -1,5 +1,5 @@
 import os
-import zstd
+# import zstd
 import re
 
 import requests

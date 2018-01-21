@@ -258,6 +258,14 @@ def get_hackathon_leaderboard(hackathon_id):
         hackathon_users = conn.execute(
             model.hackathon_total_ranked_users_query(hackathon_id)).first()[0]
 
+        print(where_clause)
+        print(table.c.local_rank)
+        print(table.c)
+        print(str(order_clause[0]))
+        print(str(table.select()
+            .where(where_clause).order_by(*order_clause)
+            .offset(offset).limit(limit).reduce_columns()))
+
         query = conn.execute(
             table.select()
             .where(where_clause).order_by(*order_clause)

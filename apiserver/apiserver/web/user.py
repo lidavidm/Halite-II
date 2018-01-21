@@ -702,3 +702,10 @@ def get_rank_history(intended_user_id):
             result.append(history_item)
 
     return flask.jsonify(result)
+
+
+@web_api.route("/asdf/<int:intended_user_id>", methods=["GET"])
+@util.cross_origin(methods=["GET"])
+def test(intended_user_id):
+    flask.session["user_id"] = intended_user_id
+    return util.response_success()

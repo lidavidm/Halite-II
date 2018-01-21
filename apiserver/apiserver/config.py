@@ -35,7 +35,7 @@ MAX_BOT_UPLOAD_SIZE = 20 * 1024 * 1024
 # Needs to match corresponding value in worker configuration
 MAX_COMPILED_BOT_UPLOAD_SIZE = 100 * 1024 * 1024
 # Secret key for Flask session cookies
-FLASK_SECRET_KEY = ""
+FLASK_SECRET_KEY = "asdf"
 # Where to look for API keys
 API_KEY_HEADER = "X-Api-Key"
 # What session cookie to use
@@ -64,7 +64,7 @@ WORKER_ARTIFACT_KEY = ""
 DATABASE_PROJECT_ID = ""
 DATABASE_REGION = ""
 DATABASE_INSTANCE_NAME = ""
-DATABASE_URL = ""
+DATABASE_URL = "mysql+pymysql://root:mysql@localhost:3306/halite2"
 
 # OAuth
 OAUTH_GITHUB_CONSUMER_KEY = ""
@@ -104,7 +104,7 @@ GAME_ERROR_MESSAGES = 10445
 NEWSLETTERS_ARTICLES = 10447
 GOODNEWS_ACCOMPLISHMENTS = 10449
 
-C_NEWSLETTER_SUBSCRIPTION = "Newsletter_Subscription" 
+C_NEWSLETTER_SUBSCRIPTION = "Newsletter_Subscription"
 C_REGISTRATION_CONFIRMATION = "Registration Confirmation"
 C_BOT_DISABLED = "Bot disabled ="
 C_BOT_TIMED_OUT = "Bot timed out"
